@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      image-refs: ${{ steps.emit-refs.outputs.image-refs }}
+      image-refs: ${{ steps.apko.outputs.image-refs }}
 
     # https://docs.github.com/en/actions/reference/authentication-in-a-workflow
     permissions:
@@ -40,13 +40,9 @@ jobs:
         base-tag: ghcr.io/${{ github.repository }}
 
     - name: Smoke Test
-      run: IMAGE_NAME=${{ steps.apko.outputs.digest }} ./test.sh
-
-    - name: Emit Image Refs output
-      id: emit-refs
-      run: |
-        cat apko.images | sed 's/$/\n/g' | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]' | jq .
-        echo ::set-output name=image-refs::$(cat apko.images | sed 's/$/\n/g' | grep -v '^$' | jq -R -s -c 'split("\n")[:-1]')
+      env:
+        IMAGE_NAME: ${{ steps.apko.outputs.digest }}
+      run: ./test.sh
 
     # Post to slack when things fail.
     - if: ${{ failure() }}
